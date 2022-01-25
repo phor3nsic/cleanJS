@@ -20,25 +20,25 @@ func newurl(url string) string {
 func reqUrl(url string) [3]string {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	client := &http.Client{}
+	var r [3]string
+	r[2] = "0"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return r
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return r
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	sb := string(body)
 	contentType := resp.Header.Get("Content-type")
 	statusCode := strconv.Itoa(resp.StatusCode)
-
-	var r [3]string
 
 	r[0] = sb
 	r[1] = contentType
@@ -57,7 +57,7 @@ func checkJs(url string) bool {
 		log.Fatal(err)
 	}
 
-	if statusCode >= 200 && statusCode <= 299 && strings.Contains(contentType[0], "application/javascript") {
+	if statusCode >= 200 && statusCode <= 299 && strings.Contains(contentType[0], "application/javascript") || statusCode >= 200 && statusCode <= 299 && strings.Contains(contentType[0], "text/plain") {
 		return true
 	} else {
 		return false
@@ -74,12 +74,11 @@ func checkMap(url string) bool {
 		log.Fatal(err)
 	}
 
-	if statusCode >= 200 && statusCode <= 299 && contentType[0] == "application/json" && strings.Contains(body, "version:") {
+	if contentType[0] == "application/json" && statusCode >= 200 && statusCode <= 299 && strings.Contains(body, "version\":") || contentType[0] == "text/plain" && statusCode >= 200 && statusCode <= 299 && strings.Contains(body, "version\":") {
 		return true
 	} else {
 		return false
 	}
-
 }
 
 func readStdin() {
